@@ -46,6 +46,26 @@ class ExperiencesRemoteDataSource(
             throw NetworkException("Failed to fetch recent experiences", e)
         }
     }
+
+    suspend fun searchExperiences(text : String): List<ExperienceRemote> {
+        try {
+            val response: Response<ExperiencesResponse> = apiService.searchExperiences(text)
+
+            if (response.isSuccessful) {
+                val body = response.body()
+                if (body != null) {
+                    return body.data
+                } else {
+                    throw EmptyResponseException("Recent experiences response body is null")
+                }
+            } else {
+                throw ApiException("API Error: ${response.code()} - ${response.message()}")
+            }
+
+        } catch (e: Exception) {
+            throw NetworkException("Failed to fetch recent experiences", e)
+        }
+    }
 }
 
 class NetworkException(message: String, cause: Throwable? = null) : Exception(message, cause)

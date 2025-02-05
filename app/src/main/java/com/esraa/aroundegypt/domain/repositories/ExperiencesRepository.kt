@@ -6,4 +6,5 @@ import kotlinx.coroutines.flow.Flow
 interface ExperiencesRepository {
     fun getRecommendedExperiences(): Flow<List<Experience>>
     fun getRecentExperiences(): Flow<List<Experience>>
+    fun searchExperiences(text: String): Flow<List<Experience>>
 }

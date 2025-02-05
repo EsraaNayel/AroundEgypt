@@ -43,4 +43,11 @@ class ExperiencesRepositoryImpl(
         cacheDataSource.setRecentExperiences(cachedData)
         emit(experiences)
     }
+
+    override fun searchExperiences(text: String): Flow<List<Experience>> = flow {
+        val remoteData = remoteDataSource.searchExperiences(text)
+        val experiences = remoteData.map { it.toExperience() }
+
+        emit(experiences)
+    }
 }
