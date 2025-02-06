@@ -57,8 +57,6 @@ import androidx.compose.ui.unit.sp
 import coil.compose.rememberImagePainter
 import com.esraa.aroundegypt.domain.models.Experience
 import com.esraa.aroundegypt.ui.list.viewmodel.ExperienceViewModel
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 
 
 class ExperienceActivity : ComponentActivity() {
@@ -90,50 +88,60 @@ fun SearchBar(viewModel: ExperienceViewModel) {
     val errorMessage by viewModel.error.collectAsState()
     val focusRequester = remember { FocusRequester() }
     val focusManager = LocalFocusManager.current
-
-    Row(
+    Column(
         modifier = Modifier
+            .padding(8.dp)
             .fillMaxWidth()
-            .padding(horizontal = 12.dp, vertical = 8.dp),
-        verticalAlignment = Alignment.CenterVertically
     ) {
-        Icon(Icons.Default.Menu, contentDescription = "Menu")
-        Spacer(modifier = Modifier.width(8.dp))
-        OutlinedTextField(
-            value = searchText,
-            onValueChange = { searchText = it },
-            placeholder = { Text("Try “Luxor”") },
-            modifier = Modifier.weight(1f),
-            shape = RoundedCornerShape(16.dp),
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            keyboardActions = KeyboardActions(onSearch = {
-                viewModel.searchExperiences(searchText)
-
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 12.dp, vertical = 8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(Icons.Default.Menu, contentDescription = "Menu")
+            Spacer(modifier = Modifier.width(8.dp))
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = { searchText = it },
+                placeholder = { Text("Try “Luxor”") },
+                modifier = Modifier.weight(1f),
+                shape = RoundedCornerShape(16.dp),
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                keyboardActions = KeyboardActions(onSearch = {
+                    viewModel.searchExperiences(searchText)
                     focusManager.clearFocus()
-            })
-        )
-        LaunchedEffect(Unit) {
-            Modifier.focusRequester(focusRequester)
-        }
+                })
+            )
 
-        if (isLoading) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterVertically))
-        }
-
-        errorMessage?.let {
-            Text(text = it, color = Color.Red)
-        }
-        LazyRow {
-            items(searchResults) { experience ->
-                ExperienceCard(experience, Modifier
-                    .fillMaxWidth()
-                    .padding(8.dp)
-                    .clickable { })
+            LaunchedEffect(Unit) {
+                Modifier.focusRequester(focusRequester)
             }
-        }
 
-        Spacer(modifier = Modifier.width(8.dp))
-        Icon(Icons.Default.FilterList, contentDescription = "Filter")
+            if (isLoading) {
+                CircularProgressIndicator()
+            }
+
+            errorMessage?.let {
+                Text(text = it, color = Color.Red)
+            }
+
+            Spacer(modifier = Modifier.width(8.dp))
+            Icon(Icons.Default.FilterList, contentDescription = "Filter")
+
+            if (searchResults.isNotEmpty()) {
+                LazyColumn {
+                    items(searchResults) { experience ->
+                        ExperienceCard(experience, Modifier
+                            .fillMaxSize()
+                            .padding(8.dp)
+                            .clickable { })
+                    }
+                }
+            }
+
+
+        }
     }
 }
 

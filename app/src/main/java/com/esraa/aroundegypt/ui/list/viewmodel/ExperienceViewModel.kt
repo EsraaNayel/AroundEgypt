@@ -94,18 +94,7 @@ class ExperienceViewModel(
         }
     }
 
-    suspend fun searchExperiences() {
-        searchExperiencesUseCase().catch {
-
-        }.collect { experiences ->
-            _searchResult.value = experiences
-        }
-    }
-
-
     fun searchExperiences(searchText: String) {
-
-
 
         viewModelScope.launch {
             _isLoading.value = true
@@ -121,41 +110,6 @@ class ExperienceViewModel(
             }
         }
     }
-
-
-
-
-
-
-
-
-//////////////////////////////////////////////
-//        _isLoading.value = true
-//        _error.value = null
-//
-//        searchExperiencesUseCase().catch {
-//
-//        }.collect { experiences ->
-//            if (experiences.isEmpty()) {
-//                _error.value = "No experiences found"
-//                _searchResult.value = emptyList()
-//            } else {
-//                _searchResult.value = experiences
-//                _isLoading.value = false
-//            }
-//        }
-
-//                if (response.isSuccessful) {
-//                    _searchResult.value = experiences
-//                } else {
-//                    val errorMessage = when (response.code()) {
-//                        400 -> "Bad Request"
-//                        401 -> "Unauthorized"
-//                        404 -> "Not Found"
-//                        500 -> "Internal Server Error"
-//                        else -> "Unknown Error"
-//                    }
-//                    _error.value = errorMessage
 
 
 }
