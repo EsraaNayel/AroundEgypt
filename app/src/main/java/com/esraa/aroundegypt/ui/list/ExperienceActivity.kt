@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -24,19 +23,20 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardActions
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.Menu
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Visibility
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
+import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -44,16 +44,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
-import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil.compose.rememberAsyncImagePainter
 import coil.compose.rememberImagePainter
 import com.esraa.aroundegypt.domain.models.Experience
 import com.esraa.aroundegypt.ui.list.viewmodel.ExperienceViewModel
@@ -77,83 +74,6 @@ class ExperienceActivity : ComponentActivity() {
                 HomeScreen(viewModel)
             }
         }
-    }
-}
-
-@Composable
-fun SearchBar(viewModel: ExperienceViewModel) {
-    var searchText by remember { mutableStateOf("") }
-    val searchResults by viewModel.searchResult.collectAsState()
-    val isLoading by viewModel.isLoading.collectAsState()
-    val errorMessage by viewModel.error.collectAsState()
-    val focusRequester = remember { FocusRequester() }
-    val focusManager = LocalFocusManager.current
-    Column(
-        modifier = Modifier
-            .padding(8.dp)
-            .fillMaxWidth()
-    ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Icon(Icons.Default.Menu, contentDescription = "Menu")
-            Spacer(modifier = Modifier.width(8.dp))
-            OutlinedTextField(
-                value = searchText,
-                onValueChange = { searchText = it },
-                placeholder = { Text("Try “Luxor”") },
-                modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(16.dp),
-                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-                keyboardActions = KeyboardActions(onSearch = {
-                    viewModel.searchExperiences(searchText)
-                    focusManager.clearFocus()
-                })
-            )
-
-            LaunchedEffect(Unit) {
-                Modifier.focusRequester(focusRequester)
-            }
-
-            if (isLoading) {
-                CircularProgressIndicator()
-            }
-
-            errorMessage?.let {
-                Text(text = it, color = Color.Red)
-            }
-
-            Spacer(modifier = Modifier.width(8.dp))
-            Icon(Icons.Default.FilterList, contentDescription = "Filter")
-
-            if (searchResults.isNotEmpty()) {
-                LazyColumn {
-                    items(searchResults) { experience ->
-                        ExperienceCard(experience, Modifier
-                            .fillMaxSize()
-                            .padding(8.dp)
-                            .clickable { })
-                    }
-                }
-            }
-
-
-        }
-    }
-}
-
-@Composable
-fun WelcomeSection() {
-    Column() {
-        Text(text = "Welcome!", fontSize = 24.sp, fontWeight = FontWeight.Bold)
-        Text(
-            text = "Now you can explore any experience in 360 degrees and get all the details about it all in one place.",
-            fontSize = 14.sp,
-            color = Color.Gray
-        )
     }
 }
 
@@ -203,10 +123,15 @@ fun ExperienceCard(experience: Experience, modifier: Modifier = Modifier) {
             modifier = Modifier.padding(8.dp)
         )
     }
+
+
 }
 
 @Composable
-fun RecommendedExperiences(recommendedExperiences: List<Experience>) {
+fun RecommendedExperiences(
+    recommendedExperiences: List<Experience>,
+    onItemClick: (Experience) -> Unit
+) {
     Text(text = "Recommended Experiences", fontSize = 20.sp, fontWeight = FontWeight.Bold)
 
     BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
@@ -218,42 +143,150 @@ fun RecommendedExperiences(recommendedExperiences: List<Experience>) {
                 ExperienceCard(experience, Modifier
                     .width(maxWidth - (maxWidth / 10))
                     .padding(8.dp)
-                    .clickable { })
+                    .clickable { onItemClick(experience) })
             }
         }
     }
 }
 
 @Composable
-fun MostRecentExperiences(recentExperiences: List<Experience>) {
+fun MostRecentExperiences(recentExperiences: List<Experience>, onItemClick: (Experience) -> Unit) {
     Text(text = "Most Recent", fontSize = 20.sp, fontWeight = FontWeight.Bold)
     LazyColumn {
         items(recentExperiences) { experience ->
             ExperienceCard(experience, Modifier
                 .fillMaxWidth()
                 .padding(8.dp)
-                .clickable { })
+                .clickable { onItemClick(experience) })
+
+
         }
     }
+
 }
 
 @Composable
 fun HomeScreen(viewModel: ExperienceViewModel) {
+
     val recentExperiences by
     viewModel.recentExperiences.collectAsState()
     val recommendedExperiences by
     viewModel.recommendedExperiences.collectAsState()
+    val searchResult by viewModel.searchResult.collectAsState()
+    val isLoading by viewModel.isLoading.collectAsState()
+    var searchText by remember { mutableStateOf("") }
+    var showBottomSheet by remember { mutableStateOf(false) }
+    var selectedExperience: Experience? by remember { mutableStateOf(null) }
 
-    Column(
-        modifier = Modifier
-            .fillMaxSize()
-            .padding(16.dp)
-    ) {
-        SearchBar(viewModel)
-        WelcomeSection()
-        RecommendedExperiences(recommendedExperiences)
-        MostRecentExperiences(recentExperiences)
+    Scaffold(
+
+    ) { padding ->
+
+        Column(
+            modifier = Modifier
+                .padding(padding)
+                .fillMaxSize()
+        ) {
+            OutlinedTextField(
+                value = searchText,
+                onValueChange = {
+                    searchText = it
+                    viewModel.searchExperiences(it)
+                },
+                placeholder = { Text("Try \"Luxor\"") },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Filled.Search,
+                        contentDescription = "Search"
+                    )
+                },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            )
+
+            if (isLoading) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.CenterHorizontally))
+            } else {
+                Column() {
+
+                    if (searchText.isEmpty()) {
+                        Text(text = "Welcome!", fontSize = 24.sp, fontWeight = FontWeight.Bold)
+                        Text(
+                            text = "Now you can explore any experience in 360 degrees and get all the details about it all in one place.",
+                            fontSize = 14.sp,
+                            color = Color.Gray
+                        )
+                    }
+
+                }
+                // Show either Recommended/Recent OR Search Results
+                val itemsToShow = if (searchText.isEmpty()) {
+                    Column {
+                        RecommendedExperiences(recommendedExperiences) { experience ->
+                            selectedExperience = experience
+                            showBottomSheet = true
+                        }
+                        MostRecentExperiences(recentExperiences) { experience ->
+                            selectedExperience = experience
+                            showBottomSheet = true
+                        }
+                    }
+
+                } else {
+                    LazyColumn {
+                        items(searchResult) { experience ->
+                            ExperienceCard(experience, Modifier
+                                .fillMaxWidth()
+                                .padding(8.dp)
+                                .clickable {
+                                    selectedExperience = experience
+                                    showBottomSheet = true
+                                })
+                        }
+                    }
+                }
+            }
+        }
+
+        // Bottom Sheet
+        if (showBottomSheet && selectedExperience != null) {
+            ExperienceDetails(selectedExperience!!) {
+                showBottomSheet = false
+            }
+        }
     }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun ExperienceDetails(experience: Experience, onClose: () -> Unit) {
+    ModalBottomSheet(
+        onDismissRequest = onClose,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp)
+        ) {
+            Text(experience.title, style = MaterialTheme.typography.headlineSmall)
+            Image(
+                painter = rememberAsyncImagePainter(model = experience.cover_photo),
+                contentDescription = null,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(200.dp)
+                    .padding(8.dp)
+            )
+            Text(experience.title, style = MaterialTheme.typography.bodyMedium)
+
+            // Like Button
+            Button(onClick = { /*TODO*/ }) {
+                Text("Like")
+            }
+        }
+    }
+
 }
 
 @Preview(showBackground = true)
